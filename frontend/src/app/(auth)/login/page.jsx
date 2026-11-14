@@ -37,7 +37,7 @@ export default function LoginPage() {
 
     setErrors({});
     setIsSubmitting(true);
-    const ok = await login(email.trim().toLowerCase(), password);
+    const ok = await login(email.trim().toLowerCase(), password, rememberMe);
     setIsSubmitting(false);
 
     if (ok) {

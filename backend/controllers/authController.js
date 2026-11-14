@@ -93,7 +93,7 @@ export async function register(req, res, next) {
 
 export async function login(req, res, next) {
   try {
-    const { email, password } = req.body || {};
+    const { email, password, rememberMe = true } = req.body || {};
 
     const emailRes = validateEmail(email);
     if (!emailRes.valid) throw new AppError(emailRes.error, 400);
@@ -114,7 +114,7 @@ export async function login(req, res, next) {
     }
 
     const token = signAuthToken(user._id.toHexString());
-    setAuthCookie(req, res, token);
+    setAuthCookie(req, res, token, rememberMe !== false);
 
     const userDto = await formatUserProfile(
       user,

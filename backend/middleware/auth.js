@@ -4,28 +4,29 @@ import { AppError } from './errorHandler.js';
 
 export const AUTH_COOKIE_NAME = 'connectly_token';
 
-function cookieOptions(req) {
+function cookieOptions(req, persistent = true) {
   const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
   const sameSite = env.crossSiteCookies ? 'none' : 'lax';
-  return {
+  const options = {
     httpOnly: true,
     secure: env.crossSiteCookies || isHttps || env.nodeEnv === 'production',
     sameSite,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   };
+  if (persistent) options.maxAge = 7 * 24 * 60 * 60 * 1000;
+  return options;
 }
 
 export function signAuthToken(userId) {
   return jwt.sign({ userId }, env.jwtSecret, { expiresIn: '7d' });
 }
 
-export function setAuthCookie(req, res, token) {
-  res.cookie(AUTH_COOKIE_NAME, token, cookieOptions(req));
+export function setAuthCookie(req, res, token, persistent = true) {
+  res.cookie(AUTH_COOKIE_NAME, token, cookieOptions(req, persistent));
 }
 
 export function clearAuthCookie(req, res) {
-  const { maxAge: _maxAge, ...options } = cookieOptions(req);
+  const options = cookieOptions(req, false);
   res.clearCookie(AUTH_COOKIE_NAME, options);
 }
 

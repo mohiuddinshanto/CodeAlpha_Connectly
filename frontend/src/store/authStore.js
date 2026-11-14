@@ -40,9 +40,9 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  login: async (email, password) => {
+  login: async (email, password, rememberMe = true) => {
     try {
-      const res = await authApi.login({ email, password });
+      const res = await authApi.login({ email, password, rememberMe });
       saveSessionHint();
       set({
         user: res.user,
