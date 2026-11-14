@@ -130,14 +130,6 @@ export function AuthModal() {
     }
   };
 
-  const handleDemoSignIn = async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    const ok = await login('demo@connectly.app', 'Password123!');
-    setIsSubmitting(false);
-    if (ok) refreshAfterAuth();
-  };
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/45 p-4 backdrop-blur-[1px]"
@@ -366,19 +358,6 @@ export function AuthModal() {
             <span>{isRegister ? 'Create Account' : 'Sign In'}</span>
           </button>
         </form>
-
-        {!isRegister && (
-          <div className="mt-3">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={handleDemoSignIn}
-              className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2.5 text-xs font-medium text-[#0F172A] transition-colors hover:bg-[#EEF2FF] hover:text-[#4F46E5] disabled:opacity-60"
-            >
-              Continue with Demo Account (Elena Vance)
-            </button>
-          </div>
-        )}
 
         <div className="mt-5 border-t border-[#E2E8F0] pt-4 text-center text-sm text-[#64748B]">
           {isRegister ? (

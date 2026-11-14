@@ -10,6 +10,11 @@ import userRoutes from './routes/userRoutes.js';
 import { assertUploadConfig } from './services/uploadService.js';
 
 async function startServer() {
+  if (!env.jwtSecret || !env.jwtSecret.trim()) {
+    throw new Error(
+      'JWT_SECRET is required. Set JWT_SECRET in backend/.env for authentication.'
+    );
+  }
   assertUploadConfig();
   await connectDatabase();
 

@@ -31,7 +31,7 @@ Repository Name: `CodeAlpha_SocialMediaPlatform`
 CodeAlpha_SocialMediaPlatform/
 ├── backend/
 │   ├── config/
-│   │   ├── database.js         # MongoDB Native Driver connection, indexes & seed data
+│   │   ├── database.js         # MongoDB Native Driver connection & index setup
 │   │   └── env.js              # Server environment configuration
 │   ├── controllers/
 │   │   ├── authController.js   # Register, login, logout, /me
@@ -55,8 +55,6 @@ CodeAlpha_SocialMediaPlatform/
 │   ├── server.js
 │   └── validators.test.js
 ├── frontend/
-│   ├── public/
-│   │   └── src/assets/images/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── (auth)/
@@ -88,7 +86,6 @@ CodeAlpha_SocialMediaPlatform/
 │   ├── next.config.mjs
 │   ├── package.json
 │   └── postcss.config.mjs
-├── .env.example
 ├── .gitignore
 ├── package.json                # Root concurrently dev/start/build/test scripts
 └── README.md
@@ -125,7 +122,7 @@ CodeAlpha_SocialMediaPlatform/
    - Frontend (Next.js): `http://localhost:3000`
    - Backend (Express API): `http://127.0.0.1:5000` (proxied automatically via `/api/*` rewrite in `frontend/next.config.mjs`)
 
-5. **Run backend tests & production build**:
+5. **Run backend unit tests & production build**:
    ```bash
    npm test
    npm run build
@@ -143,7 +140,7 @@ CodeAlpha_SocialMediaPlatform/
 | `PORT` | Express API listening port | `5000` |
 | `MONGODB_URI` | MongoDB connection string (required) | `mongodb+srv://...` |
 | `MONGODB_DB_NAME` | Target MongoDB database name | `connectly` |
-| `JWT_SECRET` | Secret key for signing JWT cookies | `your-random-secret` |
+| `JWT_SECRET` | Secret key for signing JWT cookies (required) | `your-random-secret` |
 | `CLIENT_URL` | Allowed CORS origin(s) | `http://localhost:3000` |
 | `IMGBB_API_KEY` | Server-side ImgBB upload API key (required) | `your-imgbb-key` |
 
@@ -204,6 +201,19 @@ CodeAlpha_SocialMediaPlatform/
 | `GET` | `/api/posts/:id/comments` | Optional | List comments on a post |
 | `POST` | `/api/posts/:id/comments` | Required | Add a comment to a post |
 | `DELETE` | `/api/comments/:id` | Required (Owner) | Delete own comment |
+
+---
+
+## Troubleshooting
+
+- **Missing Environment Variables (`JWT_SECRET`, `IMGBB_API_KEY`, or `MONGODB_URI is required`)**:
+  Ensure `backend/.env` exists (copied from `backend/.env.example`) and all three required variables are populated with non-empty values.
+- **MongoDB Connection Failed (`ECONNREFUSED` or `ServerSelectionError`)**:
+  Verify your local `mongod` service is running or your MongoDB Atlas URI is valid, your IP is allowlisted in Atlas Network Access, and `MONGODB_URI` is reachable from the backend host.
+- **CORS or Cookie Session Not Persisting**:
+  - Keep `NEXT_PUBLIC_API_URL=/api` in `frontend/.env.local` so requests flow through the Next.js rewrite on `http://localhost:3000` as same-origin requests.
+  - Ensure `CLIENT_URL` in `backend/.env` matches the exact frontend origin (e.g. `http://localhost:3000`).
+  - In production (`NODE_ENV=production`), cookies set `secure: true` and `sameSite: 'none'`, so serve the app over HTTPS.
 
 ---
 
