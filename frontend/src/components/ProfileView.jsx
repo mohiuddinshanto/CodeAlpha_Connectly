@@ -34,6 +34,8 @@ export function ProfileView({ userId }) {
     profilePosts,
     followers,
     following,
+    followersHasMore,
+    followingHasMore,
     isLoadingProfile,
     profileError,
     fetchUserProfile,
@@ -43,6 +45,7 @@ export function ProfileView({ userId }) {
     updateProfilePost,
     toggleProfilePostLike,
     setProfilePostCommentsCount,
+    loadMoreProfileUsers,
   } = useUserStore();
 
   const [tab, setTab] = useState('posts');
@@ -463,11 +466,19 @@ export function ProfileView({ userId }) {
         </div>
       )}
 
-      {tab === 'followers' &&
-        renderUserList(followers, 'No followers yet.')}
+      {tab === 'followers' && (
+        <>
+          {renderUserList(followers, 'No followers yet.')}
+          {followersHasMore && <button type="button" onClick={() => loadMoreProfileUsers('followers', userId)} className="w-full rounded-lg py-2 text-xs font-semibold text-[#4F46E5] hover:bg-[#EEF2FF]">Load more</button>}
+        </>
+      )}
 
-      {tab === 'following' &&
-        renderUserList(following, 'Not following anyone yet.')}
+      {tab === 'following' && (
+        <>
+          {renderUserList(following, 'Not following anyone yet.')}
+          {followingHasMore && <button type="button" onClick={() => loadMoreProfileUsers('following', userId)} className="w-full rounded-lg py-2 text-xs font-semibold text-[#4F46E5] hover:bg-[#EEF2FF]">Load more</button>}
+        </>
+      )}
 
       {/* Edit Profile Modal */}
       {editOpen && (

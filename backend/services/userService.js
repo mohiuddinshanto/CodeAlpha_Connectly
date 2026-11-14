@@ -106,12 +106,16 @@ export async function followUser(followerId, targetUserId) {
   });
 
   if (!existing) {
-    await cols.follows.insertOne({
-      _id: new ObjectId(),
-      followerId: followerOid,
-      followingId: targetOid,
-      createdAt: new Date(),
-    });
+    try {
+      await cols.follows.insertOne({
+        _id: new ObjectId(),
+        followerId: followerOid,
+        followingId: targetOid,
+        createdAt: new Date(),
+      });
+    } catch (err) {
+      if (err?.code !== 11000) throw err;
+    }
   }
 
   const followersCount = await cols.follows.countDocuments({
@@ -139,7 +143,7 @@ export async function unfollowUser(followerId, targetUserId) {
   return { following: false, followersCount };
 }
 
-export async function getFollowersList(targetUserId, viewerId) {
+export async function getFollowersList(targetUserId, viewerId, limit = 50, skip = 0) {
   const targetOid = parseObjectId(targetUserId);
   if (!targetOid) {
     throw new AppError('Invalid user ID.', 400, 'INVALID_OBJECT_ID');
@@ -148,15 +152,22 @@ export async function getFollowersList(targetUserId, viewerId) {
   const edges = await cols.follows
     .find({ followingId: targetOid })
     .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
     .toArray();
 
-  if (edges.length === 0) return [];
+  if (edges.length === 0) return { users: [], total: 0, hasMore: false };
   const followerIds = edges.map((e) => e.followerId);
   const users = await cols.users.find({ _id: { $in: followerIds } }).toArray();
-  return Promise.all(users.map((u) => formatUserProfile(u, viewerId, false)));
+  const total = await cols.follows.countDocuments({ followingId: targetOid });
+  return {
+    users: await Promise.all(users.map((u) => formatUserProfile(u, viewerId, false))),
+    total,
+    hasMore: skip + edges.length < total,
+  };
 }
 
-export async function getFollowingList(targetUserId, viewerId) {
+export async function getFollowingList(targetUserId, viewerId, limit = 50, skip = 0) {
   const targetOid = parseObjectId(targetUserId);
   if (!targetOid) {
     throw new AppError('Invalid user ID.', 400, 'INVALID_OBJECT_ID');
@@ -165,10 +176,17 @@ export async function getFollowingList(targetUserId, viewerId) {
   const edges = await cols.follows
     .find({ followerId: targetOid })
     .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
     .toArray();
 
-  if (edges.length === 0) return [];
+  if (edges.length === 0) return { users: [], total: 0, hasMore: false };
   const followingIds = edges.map((e) => e.followingId);
   const users = await cols.users.find({ _id: { $in: followingIds } }).toArray();
-  return Promise.all(users.map((u) => formatUserProfile(u, viewerId, false)));
+  const total = await cols.follows.countDocuments({ followerId: targetOid });
+  return {
+    users: await Promise.all(users.map((u) => formatUserProfile(u, viewerId, false))),
+    total,
+    hasMore: skip + edges.length < total,
+  };
 }

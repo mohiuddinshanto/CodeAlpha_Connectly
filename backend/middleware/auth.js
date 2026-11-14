@@ -4,37 +4,29 @@ import { AppError } from './errorHandler.js';
 
 export const AUTH_COOKIE_NAME = 'connectly_token';
 
+function cookieOptions(req) {
+  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const sameSite = env.crossSiteCookies ? 'none' : 'lax';
+  return {
+    httpOnly: true,
+    secure: env.crossSiteCookies || isHttps || env.nodeEnv === 'production',
+    sameSite,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  };
+}
+
 export function signAuthToken(userId) {
   return jwt.sign({ userId }, env.jwtSecret, { expiresIn: '7d' });
 }
 
 export function setAuthCookie(req, res, token) {
-  const isHttps =
-    req.secure ||
-    req.headers['x-forwarded-proto'] === 'https' ||
-    env.nodeEnv === 'production';
-
-  res.cookie(AUTH_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: isHttps,
-    sameSite: isHttps ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/',
-  });
+  res.cookie(AUTH_COOKIE_NAME, token, cookieOptions(req));
 }
 
 export function clearAuthCookie(req, res) {
-  const isHttps =
-    req.secure ||
-    req.headers['x-forwarded-proto'] === 'https' ||
-    env.nodeEnv === 'production';
-
-  res.clearCookie(AUTH_COOKIE_NAME, {
-    httpOnly: true,
-    secure: isHttps,
-    sameSite: isHttps ? 'none' : 'lax',
-    path: '/',
-  });
+  const { maxAge: _maxAge, ...options } = cookieOptions(req);
+  res.clearCookie(AUTH_COOKIE_NAME, options);
 }
 
 function extractUserIdFromRequest(req) {

@@ -84,11 +84,11 @@ export const usersApi = {
   getUserPosts(userId, limit = 20, skip = 0) {
     return request(`/users/${userId}/posts?limit=${limit}&skip=${skip}`);
   },
-  getFollowers(userId) {
-    return request(`/users/${userId}/followers`);
+  getFollowers(userId, limit = 50, skip = 0) {
+    return request(`/users/${userId}/followers?limit=${limit}&skip=${skip}`);
   },
-  getFollowing(userId) {
-    return request(`/users/${userId}/following`);
+  getFollowing(userId, limit = 50, skip = 0) {
+    return request(`/users/${userId}/following?limit=${limit}&skip=${skip}`);
   },
   uploadAvatar(file) {
     const formData = new FormData();
@@ -150,8 +150,8 @@ export const postsApi = {
   unlike(postId) {
     return request(`/posts/${postId}/like`, { method: 'DELETE' });
   },
-  getComments(postId) {
-    return request(`/posts/${postId}/comments`);
+  getComments(postId, limit = 50, skip = 0) {
+    return request(`/posts/${postId}/comments?limit=${limit}&skip=${skip}`);
   },
   addComment(postId, content) {
     return request(`/posts/${postId}/comments`, {

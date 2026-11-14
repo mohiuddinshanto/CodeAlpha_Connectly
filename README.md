@@ -91,6 +91,8 @@ CodeAlpha_SocialMediaPlatform/
 └── README.md
 ```
 
+The tree omits some package metadata for readability. Each package directory has its own `package-lock.json`, and `backend/middleware/` also contains `originGuard.js`.
+
 ---
 
 ## Setup Steps
@@ -143,6 +145,7 @@ CodeAlpha_SocialMediaPlatform/
 | `JWT_SECRET` | Secret key for signing JWT cookies (required) | `your-random-secret` |
 | `CLIENT_URL` | Allowed CORS origin(s) | `http://localhost:3000` |
 | `IMGBB_API_KEY` | Server-side ImgBB upload API key (required) | `your-imgbb-key` |
+| `CROSS_SITE_COOKIES` | Set to `true` only when frontend and API are on different sites; enables `SameSite=None; Secure` | `false` |
 
 ### `frontend/.env.example`
 
@@ -157,7 +160,7 @@ CodeAlpha_SocialMediaPlatform/
 - `users`: `{ email: 1 }` (unique), `{ username: 1 }` (unique)
 - `posts`: `{ authorId: 1, createdAt: -1 }`, `{ createdAt: -1 }`
 - `comments`: `{ postId: 1 }`
-- `follows`: `{ followerId: 1, followingId: 1 }` (unique)
+- `follows`: `{ followerId: 1, followingId: 1 }` (unique), `{ followingId: 1, createdAt: -1 }`
 
 ---
 
@@ -181,8 +184,8 @@ CodeAlpha_SocialMediaPlatform/
 | `POST` | `/api/users/upload-avatar` | Required | Upload avatar via Express -> ImgBB |
 | `GET` | `/api/users/:id` | Optional | Fetch public profile and counts |
 | `GET` | `/api/users/:id/posts` | Optional | Paginated posts authored by user |
-| `GET` | `/api/users/:id/followers` | Optional | List followers for a user |
-| `GET` | `/api/users/:id/following` | Optional | List accounts a user follows |
+| `GET` | `/api/users/:id/followers` | Optional | Paginated followers (`limit`, `skip`; default 50, max 100) |
+| `GET` | `/api/users/:id/following` | Optional | Paginated following (`limit`, `skip`; default 50, max 100) |
 | `POST` | `/api/users/:id/follow` | Required | Follow a user |
 | `DELETE` | `/api/users/:id/follow` | Required | Unfollow a user |
 
@@ -198,7 +201,7 @@ CodeAlpha_SocialMediaPlatform/
 | `DELETE` | `/api/posts/:id` | Required (Owner) | Delete own post and its comments |
 | `POST` | `/api/posts/:id/like` | Required | Atomically like a post |
 | `DELETE` | `/api/posts/:id/like` | Required | Atomically unlike a post |
-| `GET` | `/api/posts/:id/comments` | Optional | List comments on a post |
+| `GET` | `/api/posts/:id/comments` | Optional | Paginated comments (`limit`, `skip`; default 50, max 100) |
 | `POST` | `/api/posts/:id/comments` | Required | Add a comment to a post |
 | `DELETE` | `/api/comments/:id` | Required (Owner) | Delete own comment |
 
@@ -213,15 +216,25 @@ CodeAlpha_SocialMediaPlatform/
 - **CORS or Cookie Session Not Persisting**:
   - Keep `NEXT_PUBLIC_API_URL=/api` in `frontend/.env.local` so requests flow through the Next.js rewrite on `http://localhost:3000` as same-origin requests.
   - Ensure `CLIENT_URL` in `backend/.env` matches the exact frontend origin (e.g. `http://localhost:3000`).
-  - In production (`NODE_ENV=production`), cookies set `secure: true` and `sameSite: 'none'`, so serve the app over HTTPS.
+  - Cookies default to `SameSite=Lax`; set `CROSS_SITE_COOKIES=true` only when frontend and API are cross-site. That setting requires HTTPS and uses `SameSite=None; Secure`.
+  - State-changing requests with an `Origin` header must match one of the comma-separated `CLIENT_URL` origins. Requests without an Origin header are allowed for command-line clients.
 
----
+### Windows PowerShell commands
+
+After completing setup and filling in `backend/.env`, run:
+
+```powershell
+npm run dev
+npm run build
+npm start
+```
 
 ## Screenshots
 
-| View | Screenshot |
+| Home feed (desktop) | Explore search (desktop) |
 | --- | --- |
-| Home Feed (Desktop 3-Column) | ![Home Feed](./docs/screenshots/home-desktop.png) *(Placeholder — add screenshot)* |
-| Explore & User Search | ![Explore Page](./docs/screenshots/explore.png) *(Placeholder — add screenshot)* |
-| User Profile & Edit Modal | ![User Profile](./docs/screenshots/profile.png) *(Placeholder — add screenshot)* |
-| Mobile Feed & Bottom Navigation | ![Mobile View](./docs/screenshots/mobile.png) *(Placeholder — add screenshot)* |
+| ![Home feed at desktop size](./docs/screenshots/home-feed-desktop.png) | ![Explore search at desktop size](./docs/screenshots/explore-search-desktop.png) |
+
+| Profile (desktop) | Home feed (mobile) |
+| --- | --- |
+| ![Profile at desktop size](./docs/screenshots/profile-desktop.png) | ![Home feed at 375px with bottom navigation](./docs/screenshots/mobile-feed-375.png) |

@@ -285,12 +285,17 @@ export async function getPostCommentsHandler(req, res, next) {
   try {
     const postDoc = await getPostByIdOrThrow(String(req.params.id || ''));
     const cols = getCollections();
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const skip = Math.max(0, Number(req.query.skip) || 0);
     const rawComments = await cols.comments
       .find({ postId: postDoc._id })
       .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit)
       .toArray();
     const comments = await hydrateComments(rawComments);
-    res.json({ success: true, comments });
+    const total = await cols.comments.countDocuments({ postId: postDoc._id });
+    res.json({ success: true, comments, total, hasMore: skip + comments.length < total });
   } catch (err) {
     next(err);
   }

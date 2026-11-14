@@ -112,8 +112,10 @@ export async function getUserFollowersHandler(req, res, next) {
   try {
     const userId = String(req.params.id || '');
     await getUserByIdOrThrow(userId);
-    const users = await getFollowersList(userId, req.userId);
-    res.json({ success: true, users });
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const skip = Math.max(0, Number(req.query.skip) || 0);
+    const result = await getFollowersList(userId, req.userId, limit, skip);
+    res.json({ success: true, ...result });
   } catch (err) {
     next(err);
   }
@@ -123,8 +125,10 @@ export async function getUserFollowingHandler(req, res, next) {
   try {
     const userId = String(req.params.id || '');
     await getUserByIdOrThrow(userId);
-    const users = await getFollowingList(userId, req.userId);
-    res.json({ success: true, users });
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const skip = Math.max(0, Number(req.query.skip) || 0);
+    const result = await getFollowingList(userId, req.userId, limit, skip);
+    res.json({ success: true, ...result });
   } catch (err) {
     next(err);
   }

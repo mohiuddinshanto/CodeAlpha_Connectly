@@ -17,6 +17,7 @@ async function ensureIndexes() {
     { followerId: 1, followingId: 1 },
     { unique: true }
   );
+  await cols.follows.createIndex({ followingId: 1, createdAt: -1 });
 }
 
 export async function connectDatabase() {

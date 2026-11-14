@@ -34,13 +34,15 @@ export async function hydratePosts(posts, viewerId) {
   const authorMap = new Map(authors.map((a) => [a._id.toHexString(), a]));
 
   const postIds = posts.map((p) => p._id);
-  const allComments = await cols.comments
-    .find({ postId: { $in: postIds } })
+  const commentCountsRaw = await cols.comments
+    .aggregate([
+      { $match: { postId: { $in: postIds } } },
+      { $group: { _id: '$postId', count: { $sum: 1 } } },
+    ])
     .toArray();
   const commentCounts = new Map();
-  for (const c of allComments) {
-    const key = c.postId.toHexString();
-    commentCounts.set(key, (commentCounts.get(key) || 0) + 1);
+  for (const result of commentCountsRaw) {
+    commentCounts.set(result._id.toHexString(), result.count);
   }
 
   return posts.map((post) => {

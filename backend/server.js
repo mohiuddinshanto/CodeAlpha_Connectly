@@ -4,12 +4,16 @@ import express from 'express';
 import { connectDatabase, getDbMode } from './config/database.js';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { createOriginGuard } from './middleware/originGuard.js';
 import authRoutes from './routes/authRoutes.js';
 import { commentRouter, postRouter } from './routes/postRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { assertUploadConfig } from './services/uploadService.js';
 
 async function startServer() {
+  if (!env.mongoUri.trim()) {
+    throw new Error('MONGODB_URI is required. Set it in backend/.env.');
+  }
   if (!env.jwtSecret || !env.jwtSecret.trim()) {
     throw new Error(
       'JWT_SECRET is required. Set JWT_SECRET in backend/.env for authentication.'
@@ -32,6 +36,8 @@ async function startServer() {
       credentials: true,
     })
   );
+
+  app.use(createOriginGuard(allowedOrigins));
 
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true }));

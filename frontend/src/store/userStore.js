@@ -11,6 +11,8 @@ export const useUserStore = create((set, get) => ({
   profilePosts: [],
   followers: [],
   following: [],
+  followersHasMore: false,
+  followingHasMore: false,
   isLoadingProfile: false,
   profileError: null,
 
@@ -47,8 +49,8 @@ export const useUserStore = create((set, get) => ({
         await Promise.all([
           usersApi.getProfile(userId),
           usersApi.getUserPosts(userId, 30, 0),
-          usersApi.getFollowers(userId),
-          usersApi.getFollowing(userId),
+          usersApi.getFollowers(userId, 50, 0),
+          usersApi.getFollowing(userId, 50, 0),
         ]);
 
       set({
@@ -56,6 +58,8 @@ export const useUserStore = create((set, get) => ({
         profilePosts: postsRes.posts,
         followers: followersRes.users,
         following: followingRes.users,
+        followersHasMore: followersRes.hasMore,
+        followingHasMore: followingRes.hasMore,
         isLoadingProfile: false,
       });
     } catch (err) {
@@ -70,8 +74,8 @@ export const useUserStore = create((set, get) => ({
   fetchFollowersAndFollowing: async (userId) => {
     try {
       const [followersRes, followingRes] = await Promise.all([
-        usersApi.getFollowers(userId),
-        usersApi.getFollowing(userId),
+        usersApi.getFollowers(userId, 50, 0),
+        usersApi.getFollowing(userId, 50, 0),
       ]);
       set({
         followers: followersRes.users,
@@ -79,6 +83,21 @@ export const useUserStore = create((set, get) => ({
       });
     } catch {
       // ignore
+    }
+  },
+
+  loadMoreProfileUsers: async (kind, userId) => {
+    const state = get();
+    const current = kind === 'followers' ? state.followers : state.following;
+    const fetchPage = kind === 'followers' ? usersApi.getFollowers : usersApi.getFollowing;
+    try {
+      const res = await fetchPage(userId, 50, current.length);
+      set((latest) => ({
+        [kind]: [...latest[kind], ...res.users],
+        [kind === 'followers' ? 'followersHasMore' : 'followingHasMore']: res.hasMore,
+      }));
+    } catch {
+      toast.error(`Unable to load more ${kind}.`);
     }
   },
 

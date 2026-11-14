@@ -2,6 +2,20 @@ import toast from 'react-hot-toast';
 import { create } from 'zustand';
 import { ApiError, authApi } from '../services/api';
 
+const SESSION_HINT_KEY = 'connectly_session_hint';
+
+function saveSessionHint() {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1');
+  }
+}
+
+function clearSessionHint() {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(SESSION_HINT_KEY);
+  }
+}
+
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
@@ -9,11 +23,19 @@ export const useAuthStore = create((set) => ({
   authModalMode: null,
 
   checkAuth: async () => {
+    if (
+      typeof window === 'undefined' ||
+      window.localStorage.getItem(SESSION_HINT_KEY) !== '1'
+    ) {
+      set({ user: null, isAuthenticated: false, isLoading: false });
+      return;
+    }
     set({ isLoading: true });
     try {
       const res = await authApi.me();
       set({ user: res.user, isAuthenticated: true, isLoading: false });
     } catch {
+      clearSessionHint();
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
@@ -21,6 +43,7 @@ export const useAuthStore = create((set) => ({
   login: async (email, password) => {
     try {
       const res = await authApi.login({ email, password });
+      saveSessionHint();
       set({
         user: res.user,
         isAuthenticated: true,
@@ -40,6 +63,7 @@ export const useAuthStore = create((set) => ({
   register: async (payload) => {
     try {
       const res = await authApi.register(payload);
+      saveSessionHint();
       set({
         user: res.user,
         isAuthenticated: true,
@@ -64,6 +88,7 @@ export const useAuthStore = create((set) => ({
     } catch {
       // Ignore network errors on logout and clear local session
     } finally {
+      clearSessionHint();
       set({ user: null, isAuthenticated: false });
       toast.success('Signed out');
     }
