@@ -1,0 +1,6 @@
+{
+  "name": "Connectly",
+  "description": "Connectly — A modern full-stack social media platform for professional conversations, posts, comments, likes, and creator networks.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
