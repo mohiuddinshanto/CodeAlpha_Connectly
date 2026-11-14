@@ -1,0 +1,165 @@
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
+
+export class ApiError extends Error {
+  constructor(message, status, code) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+async function request(path, options = {}) {
+  const isFormData =
+    typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      ...headers,
+      ...options.headers,
+    },
+  });
+
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
+  }
+
+  if (!res.ok) {
+    const message =
+      typeof data.error === 'string'
+        ? data.error
+        : `Request failed with status ${res.status}`;
+    throw new ApiError(
+      message,
+      res.status,
+      typeof data.code === 'string' ? data.code : undefined
+    );
+  }
+
+  return data;
+}
+
+export const authApi = {
+  register(payload) {
+    return request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  login(payload) {
+    return request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  logout() {
+    return request('/auth/logout', { method: 'POST' });
+  },
+  me() {
+    return request('/auth/me');
+  },
+};
+
+export const usersApi = {
+  listSuggested(limit = 6) {
+    return request(`/users?limit=${limit}`);
+  },
+  search(q) {
+    return request(`/users/search?q=${encodeURIComponent(q)}`);
+  },
+  getProfile(userId) {
+    return request(`/users/${userId}`);
+  },
+  updateProfile(payload) {
+    return request('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+  getUserPosts(userId, limit = 20, skip = 0) {
+    return request(`/users/${userId}/posts?limit=${limit}&skip=${skip}`);
+  },
+  getFollowers(userId) {
+    return request(`/users/${userId}/followers`);
+  },
+  getFollowing(userId) {
+    return request(`/users/${userId}/following`);
+  },
+  uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    return request('/users/upload-avatar', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  follow(userId) {
+    return request(`/users/${userId}/follow`, { method: 'POST' });
+  },
+  unfollow(userId) {
+    return request(`/users/${userId}/follow`, { method: 'DELETE' });
+  },
+};
+
+export const postsApi = {
+  listAll(limit = 10, skip = 0, q = '') {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      skip: String(skip),
+    });
+    if (q.trim()) params.set('q', q.trim());
+    return request(`/posts?${params.toString()}`);
+  },
+  listFollowing(limit = 10, skip = 0) {
+    return request(`/posts/following?limit=${limit}&skip=${skip}`);
+  },
+  getById(postId) {
+    return request(`/posts/${postId}`);
+  },
+  create(payload) {
+    return request('/posts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  update(postId, payload) {
+    return request(`/posts/${postId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+  remove(postId) {
+    return request(`/posts/${postId}`, { method: 'DELETE' });
+  },
+  uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    return request('/posts/upload-image', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  like(postId) {
+    return request(`/posts/${postId}/like`, { method: 'POST' });
+  },
+  unlike(postId) {
+    return request(`/posts/${postId}/like`, { method: 'DELETE' });
+  },
+  getComments(postId) {
+    return request(`/posts/${postId}/comments`);
+  },
+  addComment(postId, content) {
+    return request(`/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  },
+  deleteComment(commentId) {
+    return request(`/comments/${commentId}`, { method: 'DELETE' });
+  },
+};

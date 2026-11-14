@@ -1,77 +1,217 @@
-# Connectly — Full-Stack Social Media Platform
+# Connectly — CodeAlpha_SocialMediaPlatform
 
-**Connectly** is a modern social media platform built for sharing posts, conversations, images, and professional networks. Designed with a clean, three-column editorial layout inspired by Threads and LinkedIn, it includes JWT authentication via HttpOnly cookies, MongoDB persistence, ImgBB image uploads, likes, comments, user search, and a follow/unfollow relationship graph.
+**Connectly** is a full-stack social media platform built for sharing posts, conversations, images, and professional networks. Designed with a clean three-column editorial layout, it uses a Next.js App Router frontend in JavaScript and a separate Express.js REST API backed by the MongoDB Native Driver, HttpOnly JWT cookie authentication, and ImgBB image hosting.
 
----
-
-## Core Features
-
-- **Authentication & Security**: User registration, login, logout, persistent HttpOnly JWT cookie sessions, bcryptjs password hashing, and route-level authorization checks.
-- **User Profiles**: Public profiles with bio, avatar, join date, posts count, followers count, following count, followers/following lists, and profile editing (own profile only).
-- **Post Management (CRUD)**: Create text/image posts, edit own posts, delete own posts with confirmation dialog, and paginate feed with "Load More".
-- **ImgBB Image Uploads**: Zero-Multer multipart image parsing (`busboy`) on the Express backend forwarded to the ImgBB API (`IMGBB_API_KEY` kept strictly server-side).
-- **Social Interactions**: Atomic like/unlike updates, inline collapsible comment threads (create & delete own comments), and follow/unfollow relationships with duplicate prevention.
-- **Discovery & Feeds**: Chronological Home/Explore feeds, personalized Following feed, interactive topic filtering, live user search, and suggested people from the database.
+Repository Name: `CodeAlpha_SocialMediaPlatform`
 
 ---
 
-## Technology Stack
+## Features
 
-- **Frontend**: React 19, TypeScript, Tailwind CSS v4, Zustand (`authStore`, `postStore`, `userStore`), Lucide React, React Hot Toast
-- **Backend**: Node.js, Express.js (`server.ts`), MongoDB Native Driver (`mongodb`), JWT (`jsonwebtoken`), `bcryptjs`, `busboy`, ImgBB API
-- **Persistence**: MongoDB Native Driver (`MONGODB_URI`), with an automatic persistent local document store fallback (`.data/connectly-db.json`) when a local MongoDB daemon is not running in sandbox environments.
-
----
-
-## Database Collections & Indexes
-
-- `users`: `_id`, `name`, `username` (unique), `email` (unique), `password`, `profilePicture`, `bio`, `createdAt`, `updatedAt`
-- `posts`: `_id`, `authorId` (indexed), `content`, `image`, `likes`, `createdAt` (indexed), `updatedAt`
-- `comments`: `_id`, `postId` (indexed), `authorId`, `content`, `createdAt`
-- `follows`: `_id`, `followerId`, `followingId` (compound unique index `{ followerId: 1, followingId: 1 }`), `createdAt`
+- **Authentication & Sessions**: Registration, login, logout, persistent HttpOnly JWT cookie sessions, `bcryptjs` password hashing, and protected route redirects (`/following`, `/profile`, `/settings`).
+- **User Profiles & Follow Graph**: Public profiles (`/profile/[id]`) displaying bio, avatar, join date, post/follower/following counts, interactive followers/following lists, and profile editing (own profile only).
+- **Posts CRUD & Pagination**: Create text/image posts, edit and delete own posts with confirmation dialog, view single-post thread pages (`/post/[id]`), and paginate feeds with **Load More**.
+- **ImgBB Image Uploads**: Multipart upload parsing (`busboy`) on the Express backend forwarded to the ImgBB API (`IMGBB_API_KEY` stored strictly server-side); only the returned image URL is saved to MongoDB.
+- **Social Interactions**: Atomic like/unlike updates, inline collapsible comment threads (create & delete own comments), and follow/unfollow relationships enforced by compound unique indexes.
+- **Discovery & Search**: Chronological Home feed (`/home`), Explore Community (`/explore`) with topic filtering and suggested creators, personalized Following feed (`/following`), and live user search.
+- **Responsive Layout**: Three-column desktop dashboard (`LeftSidebar` + Feed + `RightSidebar`), two-column tablet layout (right discovery sidebar hidden, inline search shown), and single-column mobile layout with sticky header and fixed bottom navigation.
 
 ---
 
-## REST API Endpoints
+## Tech Stack
 
-### Authentication
-- `POST /api/auth/register` — Register a new user and issue HttpOnly JWT cookie
-- `POST /api/auth/login` — Authenticate user and issue HttpOnly JWT cookie
-- `POST /api/auth/logout` — Clear authentication cookie
-- `GET /api/auth/me` — Return currently authenticated user
+- **Frontend (`frontend/`)**: Next.js 15 (App Router, JavaScript), React 19, Tailwind CSS v4, HeroUI (`@heroui/react`), Zustand (`authStore`, `postStore`, `userStore`), Lucide React, React Hot Toast
+- **Backend (`backend/`)**: Node.js, Express.js, MongoDB Native Driver (`mongodb`), JSON Web Tokens (`jsonwebtoken`), `bcryptjs`, `busboy`, `cors`, `cookie-parser`, ImgBB API
+
+---
+
+## Folder Structure
+
+```text
+CodeAlpha_SocialMediaPlatform/
+├── backend/
+│   ├── config/
+│   │   ├── database.js         # MongoDB Native Driver connection, indexes & seed data
+│   │   └── env.js              # Server environment configuration
+│   ├── controllers/
+│   │   ├── authController.js   # Register, login, logout, /me
+│   │   ├── postController.js   # Posts CRUD, likes, comments, image upload
+│   │   └── userController.js   # Profiles, search, follow/unfollow, avatar upload
+│   ├── middleware/
+│   │   ├── auth.js             # HttpOnly JWT cookie signing & auth guards
+│   │   └── errorHandler.js     # Centralized Express error handling
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── postRoutes.js
+│   │   └── userRoutes.js
+│   ├── services/
+│   │   ├── postService.js
+│   │   ├── uploadService.js    # Busboy multipart parser + ImgBB upload
+│   │   └── userService.js
+│   ├── validators/
+│   │   └── index.js
+│   ├── .env.example
+│   ├── package.json
+│   ├── server.js
+│   └── validators.test.js
+├── frontend/
+│   ├── public/
+│   │   └── src/assets/images/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── (auth)/
+│   │   │   │   ├── login/page.jsx
+│   │   │   │   └── register/page.jsx
+│   │   │   ├── (main)/
+│   │   │   │   ├── layout.jsx
+│   │   │   │   ├── home/page.jsx
+│   │   │   │   ├── explore/page.jsx
+│   │   │   │   ├── following/page.jsx
+│   │   │   │   ├── profile/page.jsx
+│   │   │   │   ├── profile/[id]/page.jsx
+│   │   │   │   ├── settings/page.jsx
+│   │   │   │   └── post/[id]/page.jsx
+│   │   │   ├── globals.css
+│   │   │   ├── layout.jsx
+│   │   │   ├── not-found.jsx
+│   │   │   ├── page.jsx
+│   │   │   └── providers.jsx
+│   │   ├── components/
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   ├── store/
+│   │   │   ├── authStore.js
+│   │   │   ├── postStore.js
+│   │   │   └── userStore.js
+│   │   └── utils/
+│   ├── .env.example
+│   ├── next.config.mjs
+│   ├── package.json
+│   └── postcss.config.mjs
+├── .env.example
+├── .gitignore
+├── package.json                # Root concurrently dev/start/build/test scripts
+└── README.md
+```
+
+---
+
+## Setup Steps
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/<your-username>/CodeAlpha_SocialMediaPlatform.git
+   cd CodeAlpha_SocialMediaPlatform
+   ```
+
+2. **Configure environment variables**:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env.local
+   ```
+   Fill in `MONGODB_URI`, `JWT_SECRET`, and `IMGBB_API_KEY` in `backend/.env`.
+
+3. **Install dependencies**:
+   ```bash
+   npm install
+   npm --prefix backend install
+   npm --prefix frontend install
+   ```
+
+4. **Run in development**:
+   ```bash
+   npm run dev
+   ```
+   - Frontend (Next.js): `http://localhost:3000`
+   - Backend (Express API): `http://127.0.0.1:5000` (proxied automatically via `/api/*` rewrite in `frontend/next.config.mjs`)
+
+5. **Run backend tests & production build**:
+   ```bash
+   npm test
+   npm run build
+   npm start
+   ```
+
+---
+
+## Environment Variables
+
+### `backend/.env.example`
+
+| Variable | Description | Example / Default |
+| --- | --- | --- |
+| `PORT` | Express API listening port | `5000` |
+| `MONGODB_URI` | MongoDB connection string (required) | `mongodb+srv://...` |
+| `MONGODB_DB_NAME` | Target MongoDB database name | `connectly` |
+| `JWT_SECRET` | Secret key for signing JWT cookies | `your-random-secret` |
+| `CLIENT_URL` | Allowed CORS origin(s) | `http://localhost:3000` |
+| `IMGBB_API_KEY` | Server-side ImgBB upload API key (required) | `your-imgbb-key` |
+
+### `frontend/.env.example`
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | Base API path used by the browser | `/api` |
+
+---
+
+## MongoDB Collections & Indexes
+
+- `users`: `{ email: 1 }` (unique), `{ username: 1 }` (unique)
+- `posts`: `{ authorId: 1, createdAt: -1 }`, `{ createdAt: -1 }`
+- `comments`: `{ postId: 1 }`
+- `follows`: `{ followerId: 1, followingId: 1 }` (unique)
+
+---
+
+## API Endpoint Table
+
+### Health & Authentication
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/health` | Public | API health & MongoDB connection mode |
+| `POST` | `/api/auth/register` | Public | Register account and set HttpOnly JWT cookie |
+| `POST` | `/api/auth/login` | Public | Authenticate user and set HttpOnly JWT cookie |
+| `POST` | `/api/auth/logout` | Public | Clear authentication cookie |
+| `GET` | `/api/auth/me` | Required | Get currently authenticated user |
 
 ### Users & Follow System
-- `GET /api/users` — List suggested users
-- `GET /api/users/search?q=` — Search users by name or username
-- `GET /api/users/:id` — Fetch public user profile & counts
-- `PUT /api/users/profile` — Update authenticated user's profile
-- `POST /api/users/upload-avatar` — Upload profile avatar via Express -> ImgBB
-- `GET /api/users/:id/posts` — Paginated posts authored by user
-- `GET /api/users/:id/followers` — List user's followers
-- `GET /api/users/:id/following` — List accounts user follows
-- `POST /api/users/:id/follow` — Follow a user
-- `DELETE /api/users/:id/follow` — Unfollow a user
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/users` | Optional | List suggested users |
+| `GET` | `/api/users/search?q=` | Optional | Search users by name or username |
+| `PUT` | `/api/users/profile` | Required | Update own profile (`name`, `bio`, `profilePicture`) |
+| `POST` | `/api/users/upload-avatar` | Required | Upload avatar via Express -> ImgBB |
+| `GET` | `/api/users/:id` | Optional | Fetch public profile and counts |
+| `GET` | `/api/users/:id/posts` | Optional | Paginated posts authored by user |
+| `GET` | `/api/users/:id/followers` | Optional | List followers for a user |
+| `GET` | `/api/users/:id/following` | Optional | List accounts a user follows |
+| `POST` | `/api/users/:id/follow` | Required | Follow a user |
+| `DELETE` | `/api/users/:id/follow` | Required | Unfollow a user |
 
 ### Posts, Likes & Comments
-- `POST /api/posts` — Create a post
-- `GET /api/posts` — Paginated public/explore feed (`limit`, `skip`, `q`)
-- `GET /api/posts/following` — Paginated feed from followed accounts
-- `GET /api/posts/:id` — Fetch single post detail
-- `PUT /api/posts/:id` — Update own post
-- `DELETE /api/posts/:id` — Delete own post and associated comments
-- `POST /api/posts/upload-image` — Upload post image via Express -> ImgBB
-- `POST /api/posts/:id/like` — Atomically like a post
-- `DELETE /api/posts/:id/like` — Atomically unlike a post
-- `POST /api/posts/:id/comments` — Add a comment to a post
-- `GET /api/posts/:id/comments` — List comments for a post
-- `DELETE /api/comments/:id` — Delete own comment
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/posts` | Optional | Paginated public/explore feed (`limit`, `skip`, `q`) |
+| `GET` | `/api/posts/following` | Required | Paginated feed from followed accounts |
+| `POST` | `/api/posts` | Required | Create a new post |
+| `POST` | `/api/posts/upload-image` | Required | Upload post image via Express -> ImgBB |
+| `GET` | `/api/posts/:id` | Optional | Fetch single post detail |
+| `PUT` | `/api/posts/:id` | Required (Owner) | Update own post |
+| `DELETE` | `/api/posts/:id` | Required (Owner) | Delete own post and its comments |
+| `POST` | `/api/posts/:id/like` | Required | Atomically like a post |
+| `DELETE` | `/api/posts/:id/like` | Required | Atomically unlike a post |
+| `GET` | `/api/posts/:id/comments` | Optional | List comments on a post |
+| `POST` | `/api/posts/:id/comments` | Required | Add a comment to a post |
+| `DELETE` | `/api/comments/:id` | Required (Owner) | Delete own comment |
 
 ---
 
-## Local Setup
+## Screenshots
 
-1. Copy `.env.example` to `.env` and configure `MONGODB_URI`, `JWT_SECRET`, and `IMGBB_API_KEY`.
-2. Install dependencies: `npm install`
-3. Run development server: `npm run dev` (starts Express + Vite on `http://localhost:3000`)
-4. Run unit tests: `npm test`
-5. Build for production: `npm run build` && `npm start`
+| View | Screenshot |
+| --- | --- |
+| Home Feed (Desktop 3-Column) | ![Home Feed](./docs/screenshots/home-desktop.png) *(Placeholder — add screenshot)* |
+| Explore & User Search | ![Explore Page](./docs/screenshots/explore.png) *(Placeholder — add screenshot)* |
+| User Profile & Edit Modal | ![User Profile](./docs/screenshots/profile.png) *(Placeholder — add screenshot)* |
+| Mobile Feed & Bottom Navigation | ![Mobile View](./docs/screenshots/mobile.png) *(Placeholder — add screenshot)* |
