@@ -5,9 +5,11 @@ import {
   Home,
   LogIn,
   LogOut,
+  MessageSquare,
   PlusSquare,
   Settings,
   User,
+  UserPlus,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -44,6 +46,20 @@ export function LeftSidebar() {
       href: isAuthenticated ? '/following' : '/login',
       icon: Users,
       active: pathname === '/following',
+    },
+    {
+      key: 'friends',
+      label: 'Friends',
+      href: isAuthenticated ? '/friends' : '/login',
+      icon: UserPlus,
+      active: pathname === '/friends',
+    },
+    {
+      key: 'messages',
+      label: 'Messages',
+      href: isAuthenticated ? '/messages' : '/login',
+      icon: MessageSquare,
+      active: pathname === '/messages' || pathname.startsWith('/messages/'),
     },
     {
       key: 'profile',

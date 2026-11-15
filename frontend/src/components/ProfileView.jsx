@@ -22,6 +22,7 @@ import { formatJoinedDate } from '../utils/formatters';
 import { validateImageUploadInput } from '../utils/validation';
 import { Avatar } from './Avatar';
 import { FeedSkeleton } from './FeedSkeleton';
+import { FriendRequestButton } from './FriendRequestButton';
 import { PostCard } from './PostCard';
 
 export function ProfileView({ userId }) {
@@ -333,7 +334,7 @@ export function ProfileView({ userId }) {
             </div>
           </div>
 
-          <div className="shrink-0">
+          <div className="flex shrink-0 flex-wrap gap-2">
             {isOwnProfile ? (
               <button
                 type="button"
@@ -344,27 +345,30 @@ export function ProfileView({ userId }) {
                 <span>Edit Profile</span>
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => handleFollowToggle(activeProfile.id)}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
-                  activeProfile.isFollowing
-                    ? 'border border-[#E2E8F0] bg-white text-[#0F172A] hover:border-[#EF4444] hover:text-[#EF4444]'
-                    : 'bg-[#6366F1] text-white hover:bg-[#4F46E5]'
-                }`}
-              >
-                {activeProfile.isFollowing ? (
-                  <>
-                    <UserCheck className="h-4 w-4" />
-                    <span>Following</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4" />
-                    <span>Follow</span>
-                  </>
-                )}
-              </button>
+              <>
+                <FriendRequestButton targetUserId={activeProfile.id} />
+                <button
+                  type="button"
+                  onClick={() => handleFollowToggle(activeProfile.id)}
+                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                    activeProfile.isFollowing
+                      ? 'border border-[#E2E8F0] bg-white text-[#0F172A] hover:border-[#EF4444] hover:text-[#EF4444]'
+                      : 'bg-[#6366F1] text-white hover:bg-[#4F46E5]'
+                  }`}
+                >
+                  {activeProfile.isFollowing ? (
+                    <>
+                      <UserCheck className="h-4 w-4" />
+                      <span>Following</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4" />
+                      <span>Follow</span>
+                    </>
+                  )}
+                </button>
+              </>
             )}
           </div>
         </div>

@@ -169,3 +169,40 @@ export const postsApi = {
     return request(`/comments/${commentId}`, { method: 'DELETE' });
   },
 };
+
+export const friendsApi = {
+  getAll() {
+    return request('/friends');
+  },
+  getRequests() {
+    return request('/friends/requests');
+  },
+  getStatus(userId) {
+    return request(`/friends/status/${userId}`);
+  },
+  sendRequest(userId) {
+    return request(`/friends/requests/${userId}`, { method: 'POST' });
+  },
+  acceptRequest(requestId) {
+    return request(`/friends/requests/${requestId}/accept`, {
+      method: 'POST',
+    });
+  },
+  removeRequest(requestId) {
+    return request(`/friends/requests/${requestId}`, { method: 'DELETE' });
+  },
+};
+
+export const chatsApi = {
+  getConversation(conversationId) {
+    return request(`/chats/${conversationId}`);
+  },
+  getMessages(conversationId, limit = 50, skip = 0) {
+    return request(
+      `/chats/${conversationId}/messages?limit=${limit}&skip=${skip}`
+    );
+  },
+  getSocketTicket() {
+    return request('/chats/socket-ticket', { method: 'POST' });
+  },
+};

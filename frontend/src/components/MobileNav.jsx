@@ -4,9 +4,11 @@ import {
   Compass,
   Home,
   LogIn,
+  MessageSquare,
   PlusSquare,
   Settings,
   User,
+  UserPlus,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -24,6 +26,20 @@ export function MobileHeader() {
 
       {isAuthenticated && user ? (
         <div className="flex items-center gap-2">
+          <Link
+            href="/friends"
+            aria-label="Open friends"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]"
+          >
+            <UserPlus className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/messages"
+            aria-label="Open messages"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]"
+          >
+            <MessageSquare className="h-4 w-4" />
+          </Link>
           <Link
             href="/settings"
             aria-label="Open settings"
