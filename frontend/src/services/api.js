@@ -194,6 +194,12 @@ export const friendsApi = {
 };
 
 export const chatsApi = {
+  getUnreadCount() {
+    return request('/chats/unread-count');
+  },
+  markRead(conversationId) {
+    return request(`/chats/${conversationId}/read`, { method: 'POST' });
+  },
   getConversation(conversationId) {
     return request(`/chats/${conversationId}`);
   },

@@ -9,16 +9,18 @@ import {
   Settings,
   User,
   UserPlus,
-  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '../store/authStore';
 import { Avatar } from './Avatar';
 import { BrandLogo } from './BrandLogo';
+import { useChatNotifications } from './ChatNotifications';
+import { UnreadCountBadge } from './UnreadCountBadge';
 
 export function MobileHeader() {
   const { user, isAuthenticated } = useAuthStore();
+  const { unreadCount } = useChatNotifications();
 
   return (
     <header className="sticky top-0 z-30 flex h-13 items-center justify-between border-b border-[#E2E8F0] bg-white/95 px-4 backdrop-blur-sm md:hidden">
@@ -35,10 +37,18 @@ export function MobileHeader() {
           </Link>
           <Link
             href="/messages"
-            aria-label="Open messages"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]"
+            aria-label={
+              unreadCount
+                ? `Open messages, ${unreadCount} unread`
+                : 'Open messages'
+            }
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]"
           >
             <MessageSquare className="h-4 w-4" />
+            <UnreadCountBadge
+              count={unreadCount}
+              className="absolute -top-1 -right-1"
+            />
           </Link>
           <Link
             href="/settings"
@@ -72,6 +82,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
+  const { unreadCount } = useChatNotifications();
 
   const handleCompose = () => {
     if (!isAuthenticated) {
@@ -128,14 +139,24 @@ export function MobileBottomNav() {
       </button>
 
       <Link
-        href={isAuthenticated ? '/following' : '/login'}
-        aria-label="Following"
+        href={isAuthenticated ? '/messages' : '/login'}
+        aria-label={
+          unreadCount ? `Messages, ${unreadCount} unread` : 'Messages'
+        }
         className={`flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 text-[11px] font-medium transition-colors ${
-          pathname === '/following' ? 'text-[#6366F1]' : 'text-[#64748B]'
+          pathname === '/messages' || pathname.startsWith('/messages/')
+            ? 'text-[#6366F1]'
+            : 'text-[#64748B]'
         }`}
       >
-        <Users className="h-5 w-5" />
-        <span>Following</span>
+        <span className="relative">
+          <MessageSquare className="h-5 w-5" />
+          <UnreadCountBadge
+            count={unreadCount}
+            className="absolute -top-2 -right-2"
+          />
+        </span>
+        <span>Messages</span>
       </Link>
 
       <Link

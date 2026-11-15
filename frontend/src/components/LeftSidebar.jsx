@@ -17,11 +17,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '../store/authStore';
 import { Avatar } from './Avatar';
 import { BrandLogo } from './BrandLogo';
+import { useChatNotifications } from './ChatNotifications';
+import { UnreadCountBadge } from './UnreadCountBadge';
 
 export function LeftSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { unreadCount } = useChatNotifications();
 
   const profileHref = user ? `/profile/${user.id}` : '/login';
 
@@ -123,7 +126,15 @@ export function LeftSidebar() {
                     : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
                 }`}
               >
-                <Icon className="h-[18px] w-[18px] shrink-0" />
+                <span className="relative">
+                  <Icon className="h-[18px] w-[18px] shrink-0" />
+                  {item.key === 'messages' && (
+                    <UnreadCountBadge
+                      count={unreadCount}
+                      className="absolute -top-2 -right-3"
+                    />
+                  )}
+                </span>
                 <span>{item.label}</span>
               </Link>
             );

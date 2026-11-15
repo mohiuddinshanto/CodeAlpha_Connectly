@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { ApiError, friendsApi } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { Avatar } from './Avatar';
+import { useChatNotifications } from './ChatNotifications';
 
 function PersonLink({ user }) {
   return (
@@ -27,6 +28,7 @@ function PersonLink({ user }) {
 
 export function FriendsView() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
+  const { refreshConnections } = useChatNotifications();
   const [tab, setTab] = useState('incoming');
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
@@ -65,6 +67,13 @@ export function FriendsView() {
     try {
       if (action === 'accept') {
         await friendsApi.acceptRequest(requestId);
+        refreshConnections().catch((err) =>
+          toast.error(
+            err instanceof ApiError
+              ? err.message
+              : 'Unable to refresh message notifications.'
+          )
+        );
         toast.success('Friend request accepted');
       } else {
         await friendsApi.removeRequest(requestId);
