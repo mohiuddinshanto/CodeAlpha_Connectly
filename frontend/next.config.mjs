@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const apiUrl = process.env.API_URL || 'http://127.0.0.1:5000/api';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -13,7 +14,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://127.0.0.1:5000/api/:path*',
+        destination: `${apiUrl}/:path*`,
       },
     ];
   },

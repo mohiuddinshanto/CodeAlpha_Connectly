@@ -151,7 +151,7 @@ The tree omits some package metadata for readability. Each package directory has
 
 | Variable | Description | Default |
 | --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | Base API path used by the browser | `/api` |
+| `API_URL` | Server-side backend API base URL used by the Next.js proxy | `http://localhost:5000/api` |
 
 ---
 
@@ -214,7 +214,7 @@ The tree omits some package metadata for readability. Each package directory has
 - **MongoDB Connection Failed (`ECONNREFUSED` or `ServerSelectionError`)**:
   Verify your local `mongod` service is running or your MongoDB Atlas URI is valid, your IP is allowlisted in Atlas Network Access, and `MONGODB_URI` is reachable from the backend host.
 - **CORS or Cookie Session Not Persisting**:
-  - Keep `NEXT_PUBLIC_API_URL=/api` in `frontend/.env.local` so requests flow through the Next.js rewrite on `http://localhost:3000` as same-origin requests.
+  - Set `API_URL` in `frontend/.env.local` to the backend URL ending in `/api`; browser requests go to the same-origin `/api` path and are proxied by Next.js.
   - Ensure `CLIENT_URL` in `backend/.env` matches the exact frontend origin (e.g. `http://localhost:3000`).
   - Cookies default to `SameSite=Lax`; set `CROSS_SITE_COOKIES=true` only when frontend and API are cross-site. That setting requires HTTPS and uses `SameSite=None; Secure`.
   - State-changing requests with an `Origin` header must match one of the comma-separated `CLIENT_URL` origins. Requests without an Origin header are allowed for command-line clients.

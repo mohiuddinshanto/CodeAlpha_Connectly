@@ -54,7 +54,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | Yes | Backend API base URL, including `/api`. Local example: `http://localhost:5000/api`. Production example: `https://api.example.com/api`. This value is exposed to the browser; never put secrets here. |
+| `API_URL` | Yes | Server-side backend API base URL, including `/api`. Local example: `http://localhost:5000/api`. Production example: `https://api.example.com/api`. Requests are proxied through Next.js, so this value is not exposed to the browser. |
 
 ## Build and run for production
 
@@ -63,11 +63,11 @@ npm run build
 npm start
 ```
 
-Set `NEXT_PUBLIC_API_URL` in the frontend hosting provider before building. Deploy this repository as a Next.js application and use its root directory as the project root.
+Set `API_URL` in the frontend hosting provider to the backend URL ending in `/api` (for example, `https://connectlycackend.vercel.app/api`). Deploy this repository as a Next.js application and use its root directory as the project root.
 
 ## Connect to the backend
 
-The frontend sends API requests directly to `NEXT_PUBLIC_API_URL` and uses cookie-based authentication. Configure the backend's `CLIENT_URL` with the exact frontend origin. For separately hosted frontend and backend domains, the backend must allow credentialed CORS and cross-site secure cookies; serve both over HTTPS. See the backend README for its environment and deployment setup.
+The browser sends API requests to the frontend's same-origin `/api` path. Next.js proxies them to the backend specified by the server-only `API_URL`, keeping the backend URL out of browser code while retaining cookie-based authentication. Configure the backend's `CLIENT_URL` with the exact frontend origin. Serve both over HTTPS. See the backend README for its environment and deployment setup.
 
 ## Scripts
 
