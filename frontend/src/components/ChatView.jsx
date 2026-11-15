@@ -116,10 +116,9 @@ export function ChatView({ conversationId }) {
     const connect = async () => {
       setSocketStatus('connecting');
       try {
-        const { ticket } = await chatsApi.getSocketTicket();
+        const { ticket, socketUrl } = await chatsApi.getSocketTicket();
         if (!active) return;
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = `${protocol}//${window.location.host}/ws?ticket=${encodeURIComponent(ticket)}`;
+        const url = `${socketUrl}?ticket=${encodeURIComponent(ticket)}`;
         socket = new WebSocket(url);
         socketRef.current = socket;
 
