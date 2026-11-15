@@ -214,7 +214,7 @@ export function PostCard({
               alt={`Attachment by ${post.author.name}`}
               referrerPolicy="no-referrer"
               onError={() => setImageError(true)}
-              className="max-h-[420px] w-full object-cover"
+              className="max-h-[70vh] w-full object-contain"
             />
           )}
         </div>

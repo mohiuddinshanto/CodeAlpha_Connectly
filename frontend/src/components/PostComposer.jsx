@@ -138,7 +138,7 @@ export function PostComposer({ textareaId = 'post-composer-input' }) {
                 src={displayPreview}
                 alt="Selected post attachment preview"
                 referrerPolicy="no-referrer"
-                className="max-h-72 w-full object-cover"
+                className="max-h-[70vh] w-full object-contain"
               />
               {isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#0F172A]/45 text-white">
