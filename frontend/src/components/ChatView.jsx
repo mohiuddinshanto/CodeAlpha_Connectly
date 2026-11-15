@@ -125,9 +125,6 @@ export function ChatView({ conversationId }) {
         socket.onopen = () => {
           retryDelay = 1000;
           setSocketStatus('connecting');
-          socket.send(
-            JSON.stringify({ type: 'subscribe', conversationId })
-          );
         };
         socket.onmessage = (event) => {
           let data;
@@ -136,7 +133,14 @@ export function ChatView({ conversationId }) {
           } catch {
             return;
           }
-          if (data.type === 'new_message' || data.type === 'message_sent') {
+          if (data.type === 'ready') {
+            socket.send(
+              JSON.stringify({ type: 'subscribe', conversationId })
+            );
+          } else if (
+            data.type === 'new_message' ||
+            data.type === 'message_sent'
+          ) {
             appendMessage(data.message);
             if (data.clientMessageId) {
               pendingMessagesRef.current.delete(data.clientMessageId);
