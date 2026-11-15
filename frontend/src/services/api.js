@@ -150,13 +150,19 @@ export const postsApi = {
   unlike(postId) {
     return request(`/posts/${postId}/like`, { method: 'DELETE' });
   },
+  getLikes(postId, limit = 50, skip = 0) {
+    return request(`/posts/${postId}/likes?limit=${limit}&skip=${skip}`);
+  },
   getComments(postId, limit = 50, skip = 0) {
     return request(`/posts/${postId}/comments?limit=${limit}&skip=${skip}`);
   },
-  addComment(postId, content) {
+  addComment(postId, content, parentCommentId) {
     return request(`/posts/${postId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({
+        content,
+        ...(parentCommentId ? { parentCommentId } : {}),
+      }),
     });
   },
   deleteComment(commentId) {

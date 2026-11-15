@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Send, Trash2 } from 'lucide-react';
+import { Loader2, Send, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -8,6 +8,80 @@ import { ApiError, postsApi } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { formatRelativeTime } from '../utils/formatters';
 import { Avatar } from './Avatar';
+
+function CommentItem({
+  comment,
+  user,
+  deletingId,
+  isReply = false,
+  onDelete,
+  onReply,
+}) {
+  const isOwner = user?.id === comment.author.id;
+
+  return (
+    <div
+      className={`flex items-start gap-2.5 rounded-xl px-3.5 py-2.5 ${
+        isReply ? 'bg-white' : 'bg-[#F8FAFC]'
+      }`}
+    >
+      <Link
+        href={`/profile/${comment.author.id}`}
+        aria-label={`View ${comment.author.name}'s profile`}
+        className="mt-0.5 rounded-full"
+      >
+        <Avatar
+          src={comment.author.profilePicture}
+          name={comment.author.name}
+          size="xs"
+        />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <Link
+              href={`/profile/${comment.author.id}`}
+              className="font-semibold text-[#0F172A] hover:underline"
+            >
+              {comment.author.name}
+            </Link>
+            <span className="text-[#64748B]">@{comment.author.username}</span>
+            <span aria-hidden="true" className="text-[#94A3B8]">
+              ·
+            </span>
+            <span className="text-[#64748B] tabular-nums">
+              {formatRelativeTime(comment.createdAt)}
+            </span>
+          </div>
+
+          {isOwner && (
+            <button
+              type="button"
+              disabled={deletingId === comment.id}
+              onClick={() => onDelete(comment.id)}
+              aria-label={`Delete comment "${comment.content.slice(0, 24)}"`}
+              className="rounded-md p-1 text-[#94A3B8] transition-colors hover:bg-white hover:text-[#EF4444]"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <p className="mt-1 break-words text-sm leading-relaxed text-[#0F172A]">
+          {comment.content}
+        </p>
+        {!isReply && (
+          <button
+            type="button"
+            onClick={() => onReply(comment)}
+            className="mt-1.5 text-xs font-semibold text-[#6366F1] hover:text-[#4F46E5]"
+          >
+            Reply
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function CommentSection({ postId, onCountChange }) {
   const { user, isAuthenticated, openAuthModal } = useAuthStore();
@@ -19,11 +93,18 @@ export function CommentSection({ postId, onCountChange }) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [text, setText] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [replyingToId, setReplyingToId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
+    setComments([]);
+    setLoadedCount(0);
+    setLocallyAddedIds(new Set());
+    locallyAddedIdsRef.current = new Set();
+    setHasMore(false);
     setIsLoading(true);
     postsApi
       .getComments(postId, 50, 0)
@@ -45,9 +126,12 @@ export function CommentSection({ postId, onCountChange }) {
           setIsLoading(false);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
           setIsLoading(false);
+          toast.error(
+            err instanceof ApiError ? err.message : 'Unable to load comments.'
+          );
         }
       });
     return () => {
@@ -80,13 +164,13 @@ export function CommentSection({ postId, onCountChange }) {
     }
   };
 
-  const handleAddComment = async (e) => {
+  const submitComment = async (e, value, parentCommentId = null) => {
     e.preventDefault();
     if (!isAuthenticated) {
       openAuthModal('login');
       return;
     }
-    const trimmed = text.trim();
+    const trimmed = value.trim();
     if (!trimmed) {
       toast.error('Please enter a comment before submitting.');
       return;
@@ -94,7 +178,11 @@ export function CommentSection({ postId, onCountChange }) {
 
     setIsSubmitting(true);
     try {
-      const res = await postsApi.addComment(postId, trimmed);
+      const res = await postsApi.addComment(
+        postId,
+        trimmed,
+        parentCommentId
+      );
       setComments((prev) =>
         [...prev, res.comment].sort(
           (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
@@ -104,34 +192,79 @@ export function CommentSection({ postId, onCountChange }) {
       locallyAddedIdsRef.current = nextLocalIds;
       setLocallyAddedIds(nextLocalIds);
       setHasMore(res.commentsCount > loadedCount + nextLocalIds.size);
-      setText('');
+      if (parentCommentId) {
+        setReplyText('');
+        setReplyingToId(null);
+      } else {
+        setText('');
+      }
       onCountChange(res.commentsCount);
-      toast.success('Comment added');
+      toast.success(parentCommentId ? 'Reply added' : 'Comment added');
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : 'Unable to post comment.'
+        err instanceof ApiError
+          ? err.message
+          : parentCommentId
+            ? 'Unable to post reply.'
+            : 'Unable to post comment.'
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleAddComment = (e) => submitComment(e, text);
+
+  const handleAddReply = (e) => {
+    if (!replyingToId) {
+      e.preventDefault();
+      return;
+    }
+    return submitComment(e, replyText, replyingToId);
+  };
+
+  const handleStartReply = (comment) => {
+    if (!isAuthenticated) {
+      openAuthModal('login');
+      return;
+    }
+    setReplyText('');
+    setReplyingToId((current) =>
+      current === comment.id ? null : comment.id
+    );
+  };
+
   const handleDeleteComment = async (commentId) => {
     setDeletingId(commentId);
     try {
       const res = await postsApi.deleteComment(commentId);
-      const wasLocallyAdded = locallyAddedIdsRef.current.has(commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-      const nextLocalIds = new Set(locallyAddedIdsRef.current);
+      const currentLocalIds = locallyAddedIdsRef.current;
+      const removedLoadedCount = comments.some(
+        (comment) =>
+          comment.id === commentId && !currentLocalIds.has(comment.id)
+      )
+        ? 1
+        : 0;
+      setComments((prev) =>
+        prev
+          .filter((comment) => comment.id !== commentId)
+          .map((comment) =>
+            comment.parentCommentId === commentId
+              ? { ...comment, parentCommentId: null }
+              : comment
+          )
+      );
+      const nextLocalIds = new Set(currentLocalIds);
       nextLocalIds.delete(commentId);
       locallyAddedIdsRef.current = nextLocalIds;
       setLocallyAddedIds(nextLocalIds);
-      if (!wasLocallyAdded) setLoadedCount((prev) => Math.max(0, prev - 1));
-      const nextLoadedCount = Math.max(
-        0,
-        loadedCount - (wasLocallyAdded ? 0 : 1)
-      );
+      const nextLoadedCount = Math.max(0, loadedCount - removedLoadedCount);
+      setLoadedCount(nextLoadedCount);
       setHasMore(res.commentsCount > nextLoadedCount + nextLocalIds.size);
+      if (replyingToId === commentId) {
+        setReplyingToId(null);
+        setReplyText('');
+      }
       onCountChange(res.commentsCount);
       toast.success('Comment deleted');
     } catch (err) {
@@ -142,6 +275,20 @@ export function CommentSection({ postId, onCountChange }) {
       setDeletingId(null);
     }
   };
+
+  const commentsById = new Map(comments.map((comment) => [comment.id, comment]));
+  const repliesByParentId = new Map();
+  for (const comment of comments) {
+    if (comment.parentCommentId && commentsById.has(comment.parentCommentId)) {
+      const replies = repliesByParentId.get(comment.parentCommentId) || [];
+      replies.push(comment);
+      repliesByParentId.set(comment.parentCommentId, replies);
+    }
+  }
+  const topLevelComments = comments.filter(
+    (comment) =>
+      !comment.parentCommentId || !commentsById.has(comment.parentCommentId)
+  );
 
   return (
     <div className="mt-4 border-t border-[#E2E8F0] pt-4">
@@ -178,7 +325,7 @@ export function CommentSection({ postId, onCountChange }) {
           ) : (
             <Send className="h-3.5 w-3.5" />
           )}
-          <span className="hidden sm:inline">Reply</span>
+          <span className="hidden sm:inline">Comment</span>
         </button>
       </form>
 
@@ -193,60 +340,83 @@ export function CommentSection({ postId, onCountChange }) {
         </p>
       ) : (
         <ul className="mt-4 space-y-3">
-          {comments.map((comment) => {
-            const isOwner = user?.id === comment.author.id;
+          {topLevelComments.map((comment) => {
+            const replies = repliesByParentId.get(comment.id) || [];
             return (
-              <li
-                key={comment.id}
-                className="flex items-start gap-2.5 rounded-xl bg-[#F8FAFC] px-3.5 py-2.5"
-              >
-                <Link
-                  href={`/profile/${comment.author.id}`}
-                  aria-label={`View ${comment.author.name}'s profile`}
-                  className="mt-0.5 rounded-full"
-                >
-                  <Avatar
-                    src={comment.author.profilePicture}
-                    name={comment.author.name}
-                    size="xs"
-                  />
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <Link
-                        href={`/profile/${comment.author.id}`}
-                        className="font-semibold text-[#0F172A] hover:underline"
-                      >
-                        {comment.author.name}
-                      </Link>
-                      <span className="text-[#64748B]">
-                        @{comment.author.username}
-                      </span>
-                      <span aria-hidden="true" className="text-[#94A3B8]">
-                        ·
-                      </span>
-                      <span className="text-[#64748B] tabular-nums">
-                        {formatRelativeTime(comment.createdAt)}
-                      </span>
-                    </div>
-
-                    {isOwner && (
-                      <button
-                        type="button"
-                        disabled={deletingId === comment.id}
-                        onClick={() => handleDeleteComment(comment.id)}
-                        aria-label={`Delete comment "${comment.content.slice(0, 24)}"`}
-                        className="rounded-md p-1 text-[#94A3B8] transition-colors hover:bg-white hover:text-[#EF4444]"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+              <li key={comment.id} className="space-y-2.5">
+                <CommentItem
+                  comment={comment}
+                  user={user}
+                  deletingId={deletingId}
+                  isReply={Boolean(comment.parentCommentId)}
+                  onDelete={handleDeleteComment}
+                  onReply={handleStartReply}
+                />
+                {replies.length > 0 && (
+                  <div className="ml-4 space-y-2 border-l-2 border-[#E2E8F0] pl-3 sm:ml-8">
+                    {replies.map((reply) => (
+                      <CommentItem
+                        key={reply.id}
+                        comment={reply}
+                        user={user}
+                        deletingId={deletingId}
+                        isReply
+                        onDelete={handleDeleteComment}
+                      />
+                    ))}
                   </div>
-                  <p className="mt-1 text-sm leading-relaxed text-[#0F172A] break-words">
-                    {comment.content}
-                  </p>
-                </div>
+                )}
+                {replyingToId === comment.id && !comment.parentCommentId && (
+                  <form
+                    onSubmit={handleAddReply}
+                    className="ml-4 flex items-center gap-2 border-l-2 border-[#C7D2FE] pl-3 sm:ml-8"
+                  >
+                    <Avatar
+                      src={user?.profilePicture}
+                      name={user?.name || 'Guest'}
+                      size="xs"
+                    />
+                    <label
+                      htmlFor={`reply-input-${comment.id}`}
+                      className="sr-only"
+                    >
+                      Reply to {comment.author.name}
+                    </label>
+                    <input
+                      id={`reply-input-${comment.id}`}
+                      type="text"
+                      maxLength={500}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder={`Reply to ${comment.author.name}...`}
+                      className="min-w-0 flex-1 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#6366F1] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyingToId(null);
+                        setReplyText('');
+                      }}
+                      aria-label="Cancel reply"
+                      className="rounded-lg p-2 text-[#64748B] hover:bg-[#F8FAFC]"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      aria-label="Submit reply"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#6366F1] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#4F46E5] disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                      <span className="hidden sm:inline">Reply</span>
+                    </button>
+                  </form>
+                )}
               </li>
             );
           })}

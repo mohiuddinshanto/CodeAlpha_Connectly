@@ -19,7 +19,7 @@ The Next.js web app for Connectly, a social platform for sharing posts, discover
 - Responsive home, explore, following, profile, and post pages
 - Account registration and login with persistent cookie sessions
 - Create, edit, and delete posts, including image uploads
-- Like posts, comment, and follow other users
+- Like posts and view who liked them; comment, reply to comments, and follow other users
 - Search users and discover creators by topic
 - Next.js App Router with React, Tailwind CSS, HeroUI, and Zustand
 

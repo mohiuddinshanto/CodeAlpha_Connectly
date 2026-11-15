@@ -18,6 +18,7 @@ import { formatRelativeTime } from '../utils/formatters';
 import { Avatar } from './Avatar';
 import { CommentSection } from './CommentSection';
 import { ConfirmDialog } from './ConfirmDialog';
+import { LikeListModal } from './LikeListModal';
 
 export function PostCard({
   post,
@@ -37,6 +38,7 @@ export function PostCard({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(defaultCommentsOpen);
+  const [likesOpen, setLikesOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
@@ -221,27 +223,38 @@ export function PostCard({
       )}
 
       <div className="mt-4 flex items-center gap-4 border-t border-[#F1F5F9] pt-3">
-        <button
-          type="button"
-          onClick={handleLikeClick}
-          aria-pressed={post.isLiked}
-          aria-label={
-            post.isLiked
-              ? `Unlike post by ${post.author.name} (${post.likesCount} ${post.likesCount === 1 ? 'like' : 'likes'})`
-              : `Like post by ${post.author.name} (${post.likesCount} ${post.likesCount === 1 ? 'like' : 'likes'})`
-          }
-          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-            post.isLiked
-              ? 'bg-[#EEF2FF] text-[#6366F1]'
-              : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
-          }`}
-        >
-          <Heart
-            className={`h-4 w-4 ${post.isLiked ? 'fill-[#6366F1]' : ''}`}
-          />
-          <span className="tabular-nums">{post.likesCount}</span>
-          <span>{post.likesCount === 1 ? 'Like' : 'Likes'}</span>
-        </button>
+        <div className="inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handleLikeClick}
+            aria-pressed={post.isLiked}
+            aria-label={
+              post.isLiked
+                ? `Unlike post by ${post.author.name}`
+                : `Like post by ${post.author.name}`
+            }
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+              post.isLiked
+                ? 'bg-[#EEF2FF] text-[#6366F1]'
+                : 'text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
+            }`}
+          >
+            <Heart
+              className={`h-4 w-4 ${post.isLiked ? 'fill-[#6366F1]' : ''}`}
+            />
+            <span>{post.isLiked ? 'Liked' : 'Like'}</span>
+          </button>
+          <button
+            type="button"
+            disabled={post.likesCount === 0}
+            onClick={() => setLikesOpen(true)}
+            aria-label={`View ${post.likesCount} ${post.likesCount === 1 ? 'person who likes' : 'people who like'} this post`}
+            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#64748B] transition-colors hover:bg-[#F8FAFC] hover:text-[#0F172A] disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-[#64748B]"
+          >
+            <span className="tabular-nums">{post.likesCount}</span>{' '}
+            {post.likesCount === 1 ? 'Like' : 'Likes'}
+          </button>
+        </div>
 
         <button
           type="button"
@@ -271,6 +284,13 @@ export function PostCard({
         <CommentSection
           postId={post.id}
           onCountChange={(count) => onCommentsCountChange(post.id, count)}
+        />
+      )}
+
+      {likesOpen && (
+        <LikeListModal
+          postId={post.id}
+          onClose={() => setLikesOpen(false)}
         />
       )}
 

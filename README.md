@@ -12,7 +12,7 @@ Repository Name: `CodeAlpha_SocialMediaPlatform`
 - **User Profiles & Follow Graph**: Public profiles (`/profile/[id]`) displaying bio, avatar, join date, post/follower/following counts, interactive followers/following lists, and profile editing (own profile only).
 - **Posts CRUD & Pagination**: Create text/image posts, edit and delete own posts with confirmation dialog, view single-post thread pages (`/post/[id]`), and paginate feeds with **Load More**.
 - **ImgBB Image Uploads**: Multipart upload parsing (`busboy`) on the Express backend forwarded to the ImgBB API (`IMGBB_API_KEY` stored strictly server-side); only the returned image URL is saved to MongoDB.
-- **Social Interactions**: Atomic like/unlike updates, inline collapsible comment threads (create & delete own comments), and follow/unfollow relationships enforced by compound unique indexes.
+- **Social Interactions**: Atomic like/unlike updates with a liker list, threaded replies to comments, inline collapsible discussions, and follow/unfollow relationships enforced by compound unique indexes.
 - **Discovery & Search**: Chronological Home feed (`/home`), Explore Community (`/explore`) with topic filtering and suggested creators, personalized Following feed (`/following`), and live user search.
 - **Responsive Layout**: Three-column desktop dashboard (`LeftSidebar` + Feed + `RightSidebar`), two-column tablet layout (right discovery sidebar hidden, inline search shown), and single-column mobile layout with sticky header and fixed bottom navigation.
 
@@ -201,8 +201,9 @@ The tree omits some package metadata for readability. Each package directory has
 | `DELETE` | `/api/posts/:id` | Required (Owner) | Delete own post and its comments |
 | `POST` | `/api/posts/:id/like` | Required | Atomically like a post |
 | `DELETE` | `/api/posts/:id/like` | Required | Atomically unlike a post |
+| `GET` | `/api/posts/:id/likes` | Optional | Paginated list of users who liked a post (`limit`, `skip`) |
 | `GET` | `/api/posts/:id/comments` | Optional | Paginated comments (`limit`, `skip`; default 50, max 100) |
-| `POST` | `/api/posts/:id/comments` | Required | Add a comment to a post |
+| `POST` | `/api/posts/:id/comments` | Required | Add a comment or a reply to a top-level comment (`parentCommentId`) |
 | `DELETE` | `/api/comments/:id` | Required (Owner) | Delete own comment |
 
 ---
