@@ -45,6 +45,15 @@ export default function LoginPage() {
     }
   };
 
+  const handleDemoLogin = async () => {
+    if (isSubmitting) return;
+    setErrors({});
+    setIsSubmitting(true);
+    const ok = await login('demo@connectly.app', 'ConnectlyDemo2026!', true);
+    setIsSubmitting(false);
+    if (ok) router.replace('/home');
+  };
+
   return (
     <div className="flex min-h-screen flex-col justify-center bg-[#F8FAFC] px-4 py-10">
       <div className="mx-auto w-full max-w-md">
@@ -143,6 +152,22 @@ export default function LoginPage() {
               <span>{isSubmitting ? 'Signing In...' : 'Login'}</span>
             </button>
           </form>
+
+          <div className="mt-5 rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] p-4">
+            <p className="text-sm font-semibold text-[#312E81]">Just looking around?</p>
+            <p className="mt-1 text-xs leading-5 text-[#4338CA]">
+              Explore Connectly with a ready-made demo profile and sample posts.
+            </p>
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={isSubmitting}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#A5B4FC] bg-white px-4 py-2.5 text-sm font-semibold text-[#4338CA] transition-colors hover:bg-[#E0E7FF] disabled:opacity-60"
+            >
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              <span>{isSubmitting ? 'Opening demo...' : 'Try demo account'}</span>
+            </button>
+          </div>
 
           <div className="mt-6 border-t border-[#E2E8F0] pt-4 text-center text-sm text-[#64748B]">
             Don&apos;t have an account?{' '}
